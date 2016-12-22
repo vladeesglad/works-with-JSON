@@ -1,0 +1,210 @@
+public class jsonExtract {
+  
+    //  2016 Gregory Woods
+
+    private static Map<String, Schema.SObjectField> FsMap {get; private set;}
+    
+    private static map <string, boolean> DblQts = new map <string, boolean>();
+    
+    public string objname {
+        get { return objname;}
+        public set {objname = value;}
+    }
+    
+    public string jsonstring {
+        get { return jsonstring;}
+        public set {jsonstring = value;}
+    }
+        
+
+    //	MAIN METHOD
+    
+    public string getFromJson(string apiname) {
+        
+        if (dblQts.isempty()) {
+            dblqts = getAllFieldsJsonProcess(objname);
+        }
+        
+        system.debug('jsonE... ' + objname + '.' + apiname);
+        
+        for (string k : dblqts.keyset()) {
+            
+            system.debug('jsonE... ' + k);
+            system.debug('jsonE... ' + dblqts.get(k));
+        }
+
+        string fldval = '';
+        
+        apiname = apiname.trim();
+        objname = objname.trim();
+        
+   //     system.debug('jsonExtract... : ' + apiname);
+        boolean notlast = false;
+        boolean notstring = false;
+        
+        boolean returnhasQ = dblqts.get(apiname);
+        
+        //  INITIAL INQUIRIES ESTABLISH BASIC TYPE AND LOCATION WITHIN THE STRING
+  
+        string trystring = jsonstring.remove('\\"');  // THIS REMOVES TEXT-BOUND DOUBLE QUOTES WHICH WOULD CAUSE ERRORS IN THESE PROBING QUERIES...
+        
+        if (!returnHasQ) {
+            notlast = jsonstring.substringAfter('"' + apiname + '"').contains(',');
+            notstring = true;
+        }
+        
+        
+        else {
+            notlast = trystring.substringAfter('"' + apiname + '"').substringAfter('"').substringAfter('"').contains(',');
+        }
+      
+        if (notstring) {
+            if (notlast) {
+                fldval = jsonstring.substringAfter('"' + apiname + '":').substringBefore(',');             
+            }
+            
+            else {
+                fldval = jsonstring.substringAfter('"' + apiname + '":').substringBefore('}');
+            }
+        }
+        
+        else {  
+            
+            if (notlast) {
+
+                fldval = jsonstring.substringAfter('"' + apiname + '":"').substringBefore('",');
+            }
+            
+            else  {          
+                fldval = jsonstring.substringAfter('"' + apiname + '":"').substringBefore('"}'); 
+            }
+        }
+
+        if (string.isblank(fldval)) {
+            
+            if (notlast) {
+                fldval = jsonstring.substringAfter('"' + apiname + '":"').substringBefore('",');
+            }
+            
+            else {
+                fldval = jsonstring.substringAfter('"' + apiname + '":"').substringBefore('"}');
+            }  
+        }
+         
+        if (string.isblank(fldval)) {
+            
+            if (notlast) {
+                fldval = jsonstring.substringAfter('"' + apiname + '":').substringBefore(',');
+            }
+            else {
+                fldval = jsonstring.substringAfter('"' + apiname + '":').substringBefore('}');
+            }
+        }
+   
+        fldval = fldval.replace('\\','');      
+        return fldval;
+    }
+
+    public boolean getFieldJsonProcess (string sObjName, string apiname) {
+        
+        system.debug('getFieldJSON...');
+
+        boolean hasDblQts = true;
+        
+        schema.soapType[] eEnums = new schema.soapType[]{};
+        
+        string[] eStrings = new string[]{'boolean','double','integer'};
+
+            for (string en : eStrings) {
+                schema.SoapType matcher = matchThis(en);
+                eEnums.add(matcher);
+            }
+        
+        if (fsMap == null) {     
+
+            Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
+            Schema.DescribeSObjectResult r =  gd.get(sObjName).getDescribe();
+            FsMap = r.fields.getMap();        
+
+        }
+     
+        for (string fld : FsMap.keyset()) {
+            
+            if (fld == apiname) {
+                
+                Schema.DescribeFieldResult detail = FsMap.get(fld).getDescribe();
+                
+                for (schema.SoapType matcher : eEnums) {
+                    if (matcher == detail.getSoapType()) {
+                        
+                        hasDblQts = false;
+                    }
+                }
+            }
+        }        
+        
+        return hasDblQts;
+    }
+
+
+    public map <string, boolean> getAllFieldsJsonProcess (string sObjName) {
+        
+        map <string, boolean> dblquotemap = new map <string, boolean>();
+        
+        system.debug('getFieldJSON...');
+
+        schema.soapType[] eEnums = new schema.soapType[]{};
+        
+        string[] eStrings = new string[]{'boolean','double','integer'};
+
+            for (string en : eStrings) {
+                schema.SoapType matcher = matchThis(en);
+                eEnums.add(matcher);
+            }
+        
+        
+        Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
+        Schema.DescribeSObjectResult r =  gd.get(sObjName).getDescribe();
+        FsMap = r.fields.getMap();        
+        
+
+        for (string fld : FsMap.keyset()) {
+
+            Schema.DescribeFieldResult detail = FsMap.get(fld).getDescribe();
+            
+            for (schema.SoapType matcher : eEnums) {
+                if (matcher == detail.getSoapType()) {
+                    dblquotemap.put(string.valueof(fsmap.get(fld)), false);
+                }
+                
+                else {
+                    dblquotemap.put(string.valueof(fsmap.get(fld)), true);
+                }
+            }
+
+        }        
+        
+        return dblquotemap;
+    }
+    
+
+
+
+    
+    public static schema.SoapType matchThis (string match) {
+        schema.SoapType matcher = Schema.SoapType.anyType;
+        
+        system.debug('matchThis!....');
+        
+        for (Schema.SoapType st : Schema.SoapType.values()) {
+            if (st.name() == match) {
+                matcher = st;
+                break;
+            }        
+        }
+        return matcher;
+    }
+        
+         
+    
+}
