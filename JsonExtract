@@ -46,7 +46,8 @@ public class jsonExtract {
         
         //  INITIAL INQUIRIES ESTABLISH BASIC TYPE AND LOCATION WITHIN THE STRING
   
-        string trystring = jsonstring.remove('\\"');  // THIS REMOVES TEXT-BOUND DOUBLE QUOTES WHICH WOULD CAUSE ERRORS IN THESE PROBING QUERIES...
+        string trystring = jsonstring.remove('\\"');  // THIS REMOVES TEXT-BOUND DOUBLE QUOTES WHICH WOULD CAUSE 
+                                                      // ERRORS IN THESE PROBING QUERIES...
         
         if (!returnHasQ) {
             notlast = jsonstring.substringAfter('"' + apiname + '"').contains(',');
