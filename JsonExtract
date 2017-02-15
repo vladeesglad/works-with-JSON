@@ -1,6 +1,18 @@
 public class jsonExtract {
   
     //  2016 Gregory Woods
+    
+    //  CLASS IS DESIGNED TO PERMIT USE OF CLASS METHODS TO ALLOW TRAVERSAL OF A SERIALIZED RECORD
+    //  INSTANTIATE THE CLASS, SET THE sOBJECT PROPERTY AND THE RECORD PROPERTY (RECORD IS A JSON STRING)
+    //  THEN CALL 'GETFROMJSON()' PROVIDING THE FIELD APINAME AS AN ARGUMENT
+    //  CLASS PERMITS DYNAMIC DATA RETRIEVAL FROM sOBJECT RECORDS....
+    //  PRIOR TO INTRODUCTION OF sOBJECT METHOD getPopulatedFieldsAsAMap()
+    //  THIS WAS HOW I ACCOMPLISHED DYNAMIC DATA RETRIEVAL...
+    //  OF COURSE, YOU COULD ALSO ROLL YOUR OWN MAP METHOD
+    //  I PREFERRED THIS METHOD BECAUSE A JSON STRING IS EASILY SAVEABLE AS A GLOBAL STATIC STRING THAT CAN
+    //  BE CALLED EASILY FROM ANY POINT IN THE EXECUTION CONTEXT....
+    
+    //  I STILL USE THE CLASS TO HANDLE DYNAMIC INTERRACTION WITH UNTYPED sOBJECTS
 
     private static Map<String, Schema.SObjectField> FsMap {get; private set;}
     
@@ -11,15 +23,21 @@ public class jsonExtract {
         public set {objname = value;}
     }
     
+    
     public string jsonstring {
         get { return jsonstring;}
         public set {jsonstring = value;}
     }
         
-
-    //	MAIN METHOD
     
+    public string getFromJson(string apiname, string objname, string jsonstring) {
+        string fldval = '';
+        return fldval;
+    }
+
     public string getFromJson(string apiname) {
+        
+        //	LAZY LOAD DBLQTS...
         
         if (dblQts.isempty()) {
             dblqts = getAllFieldsJsonProcess(objname);
@@ -38,7 +56,6 @@ public class jsonExtract {
         apiname = apiname.trim();
         objname = objname.trim();
         
-   //     system.debug('jsonExtract... : ' + apiname);
         boolean notlast = false;
         boolean notstring = false;
         
@@ -46,8 +63,8 @@ public class jsonExtract {
         
         //  INITIAL INQUIRIES ESTABLISH BASIC TYPE AND LOCATION WITHIN THE STRING
   
-        string trystring = jsonstring.remove('\\"');  // THIS REMOVES TEXT-BOUND DOUBLE QUOTES WHICH WOULD CAUSE 
-                                                      // ERRORS IN THESE PROBING QUERIES...
+        string trystring = jsonstring.remove('\\"');  
+        // THIS REMOVES TEXT-BOUND DOUBLE QUOTES WHICH WOULD CAUSE ERRORS IN THESE PROBING QUERIES...
         
         if (!returnHasQ) {
             notlast = jsonstring.substringAfter('"' + apiname + '"').contains(',');
@@ -58,7 +75,16 @@ public class jsonExtract {
         else {
             notlast = trystring.substringAfter('"' + apiname + '"').substringAfter('"').substringAfter('"').contains(',');
         }
-      
+        
+        //  THESE DEBUGS PLACED IN ORDER TO TRACK EFFICACY OF THIS CODE BLOCK IN DEALING WITH NULL VALUES IN THE JSON RECORD
+        //  RESULT IS THAT QUERIED VALUES THAT ARE NOT IN THE RECORD ULTIMATELY SHOW THEM AS NOTLAST == FALSE (I.E. LAST == TRUE)
+        //  BUT, IN FACT, THEY ARE NOT THERE AT ALL, AND SINCE THE GOAL OF THE CONSTRUCTION IS TO RETURN THE CORRECT VALUE
+        //  (WHERE THERE IS A VALUE TO RETURN);
+        //  THE METHOD CONSTRUCTION STILL RETURNS AN EMPTY STRING...OKAY...GW JULY 2016
+        
+//        system.debug('jsonExtract : ' + jsonstring.substringAfter('"' + apiname + '"'));
+//        system.debug('jsonExtract : ' + apiname + ' : ' + 'notLast=' + notlast + ' : ' + 'notString=' + notstring);
+        
         if (notstring) {
             if (notlast) {
                 fldval = jsonstring.substringAfter('"' + apiname + '":').substringBefore(',');             
@@ -69,10 +95,9 @@ public class jsonExtract {
             }
         }
         
-        else {  
+        else {  // GETS EVERYTHING ELSE
             
             if (notlast) {
-
                 fldval = jsonstring.substringAfter('"' + apiname + '":"').substringBefore('",');
             }
             
@@ -147,6 +172,7 @@ public class jsonExtract {
         return hasDblQts;
     }
 
+    
 
     public map <string, boolean> getAllFieldsJsonProcess (string sObjName) {
         
@@ -170,6 +196,9 @@ public class jsonExtract {
         
 
         for (string fld : FsMap.keyset()) {
+            
+    //        system.debug('jsonEx...'  + fld);
+ //           system.debug('jsonEx...'  + fsmap.get(fld));
 
             Schema.DescribeFieldResult detail = FsMap.get(fld).getDescribe();
             
@@ -187,11 +216,8 @@ public class jsonExtract {
         
         return dblquotemap;
     }
-    
 
 
-
-    
     public static schema.SoapType matchThis (string match) {
         schema.SoapType matcher = Schema.SoapType.anyType;
         
@@ -205,7 +231,5 @@ public class jsonExtract {
         }
         return matcher;
     }
-        
-         
-    
+
 }
